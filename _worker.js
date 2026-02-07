@@ -21,7 +21,7 @@ export default {
 
             // 手动修正核心 Header，确保请求能正确到达后端服务器
             newRequest.headers.set("Host", url.host); // Host 头必须是后端服务器的域名
-            newRequest.headers.set('origin', url.origin); // Origin 头必须是后端服务器的域名和协议
+            newRequest.headers.set("Origin", url.origin); // Origin 头必须是后端服务器的域名和协议
             newRequest.headers.set("Referer", url.href); // 修正 Referer 头，确保后端服务器能正确处理请求和 Referer 防盗链
 
             // 开始请求
