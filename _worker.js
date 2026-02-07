@@ -16,8 +16,15 @@ export default {
             // 添加目录路径，可以设置目录名称与前端域名相同，组合后变成：/yourdomain.com/pathname
             url.pathname = "/" + frontend_host + url.pathname;
 
-            // 开始请求
+            // 创建新的请求对象，URL已修改，其他属性与原请求相同
             let newRequest = new Request(url.href, request.clone());
+
+            // 手动修正核心 Header，确保请求能正确到达后端服务器
+            newRequest.headers.set("Host", url.host); // Host 头必须是后端服务器的域名
+            newRequest.headers.set('origin', url.origin); // Origin 头必须是后端服务器的域名和协议
+            newRequest.headers.set("Referer", url.href); // 修正 Referer 头，确保后端服务器能正确处理请求和 Referer 防盗链
+
+            // 开始请求
             let newResponse = await fetch(newRequest);
 
             if (newResponse.status >= 300 && newResponse.status < 400) { // 后端服务器返回3xx状态码
