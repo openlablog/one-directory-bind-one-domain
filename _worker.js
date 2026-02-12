@@ -30,10 +30,22 @@ export default {
             if (newResponse.status >= 300 && newResponse.status < 400) { // 后端服务器返回3xx状态码
                 let loc = newResponse.headers.get('Location') || "";
 
+                // 替换目录路径和域名
                 loc = replaceString(loc, backend_host, frontend_host);
 
                 // 重定向响应通常没有body，所以第一个参数是null
-                newResponse = new Response(null, newResponse);
+                newResponse = new Response(null, {
+                    status: newResponse.status, // 保持原状态码
+                    statusText: newResponse.statusText, // 保持原状态码文本
+                    headers: newResponse.headers, // 保持原头部
+                });
+
+                // 关键：由于内容已被修改，删除原有的长度，让 Cloudflare 自动重新计算分块传输长度
+                newResponse.headers.delete("Content-Length");
+                // 关键：由于内容已被修改，强行移除可能存在的压缩标识，防止浏览器解压失败
+                newResponse.headers.delete("Content-Encoding");
+
+                // 修改 Location 头
                 newResponse.headers.set("Location", loc);
 
             } else if (newResponse.status >= 200 && newResponse.status < 300) { // 后端服务器返回2xx状态码
@@ -48,12 +60,24 @@ export default {
                 ) {
                     let text = await newResponse.clone().text();
 
+                    // 替换目录路径和域名
                     text = replaceString(text, backend_host, frontend_host);
 
-                    newResponse = new Response(text, newResponse);
+                    // 创建新的响应对象
+                    newResponse = new Response(text, {
+                        status: newResponse.status, // 保持原状态码
+                        statusText: newResponse.statusText, // 保持原状态码文本
+                        headers: newResponse.headers, // 保持原头部
+                    });
+
+                    // 关键：由于内容已被修改，删除原有的长度，让 Cloudflare 自动重新计算分块传输长度
+                    newResponse.headers.delete("Content-Length");
+                    // 关键：由于内容已被修改，强行移除可能存在的压缩标识，防止浏览器解压失败
+                    newResponse.headers.delete("Content-Encoding");
                 }
             }
 
+            // 返回处理后的响应
             return newResponse;
         } catch (e) {
         }
